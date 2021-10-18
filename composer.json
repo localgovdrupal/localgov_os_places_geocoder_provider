@@ -1,0 +1,7 @@
+{
+  "name": "localgovdrupal/localgov_os_places_geocoder_provider",
+  "type": "library",
+  "description": "Temporary home for our OS Places Geocoder provider.",
+  "homepage": "https://github.com/localgovdrupal/localgov_os_places_geocoder_provider",
+  "license": "GPL-2.0-or-later"
+}
