@@ -55,9 +55,10 @@ class LocalgovOsPlacesTest extends BaseTestCase {
     $this->assertInstanceOf(AddressCollectionInterface::class, $result);
 
     $address = $result->first()->toArray();
-    $this->assertEquals('22047675', $address['uprn']);
-    $this->assertEquals(530759, $address['easting']);
-    $this->assertEquals('7, DYKE ROAD, BRIGHTON, BN1 3FE', $address['display']);
+    $this->assertEquals('22047674', $address['uprn']);
+    $this->assertEquals(530742, $address['easting']);
+    $this->assertEquals(50.824172, $address['latitude']);
+    $this->assertEquals('11, DYKE ROAD, BRIGHTON, BN1 3FE', $address['display']);
   }
 
   /**
