@@ -52,8 +52,6 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
    *
    * Given a postcode or part of a street address, returns all the matching
    * addresses.
-   *
-   * @todo OS grid ref to latitude/longitude translation.
    */
   public function geocodeQuery(GeocodeQuery $query) :AddressCollectionInterface {
 
@@ -65,6 +63,8 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
       $api_endpoint = $this->postcodeQueryUrl;
       $search_query = ['postcode' => $query_text];
     }
+
+    $search_query['output_srs'] = self::OS_OUTPUT_FORMAT_WITH_LAT_LON;
 
     $api_url = sprintf('%s?%s', $api_endpoint, http_build_query($search_query));
     $request = $this->getRequest($api_url);
@@ -96,8 +96,8 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
         'countryCode'      => 'GB',
         'display'          => $place['DPA']['ADDRESS'] ?? NULL,
         'formattedAddress' => $place['DPA']['ADDRESS'] ?? NULL,
-        'latitude'         => NULL,
-        'longitude'        => NULL,
+        'latitude'         => $place['DPA']['LAT'] ?? NULL,
+        'longitude'        => $place['DPA']['LNG'] ?? NULL,
         'easting'          => $place['DPA']['X_COORDINATE'] ?? NULL,
         'northing'         => $place['DPA']['Y_COORDINATE'] ?? NULL,
         'uprn'             => $place['DPA']['UPRN'] ?? NULL,
@@ -127,6 +127,15 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
 
     throw new UnsupportedOperation('The LocalgovOsPlacesGeocoder provider does not support reverse geocoding yet.');
   }
+
+  /**
+   * Default output format.
+   *
+   * The 'EPSG:4326' output format carries latitute and longitude values.  Other
+   * possible values are 'BNG', 'EPSG:27700', 'WGS84', 'EPSG:3857', and
+   * 'EPSG:4258'.
+   */
+  const OS_OUTPUT_FORMAT_WITH_LAT_LON = 'EPSG:4326';
 
   /**
    * Regex for validating *most* UK postcodes.
