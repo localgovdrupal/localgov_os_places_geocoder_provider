@@ -7,13 +7,11 @@ namespace LocalgovDrupal\OsPlacesGeocoder\Model;
 use Geocoder\Model\Address;
 
 /**
- * A LocalgovAddress includes a UPRN value and display name...
- *
- * ...in addition to everything in a Geocoder Address.
+ * UPRN-based address record.
  *
  * UPRN = Unique Property Reference Number.
  */
-class LocalgovAddress extends Address implements LocalgovAddressInterface {
+class UprnAddress extends Address implements LocationUprnInterface {
 
   /**
    * Unique Property Reference Number.
@@ -51,16 +49,6 @@ class LocalgovAddress extends Address implements LocalgovAddressInterface {
    * @var string
    */
   protected $org = '';
-
-
-  /**
-   * All numeric Ordnance Survey National Grid reference.
-   *
-   * @var OsGridRef
-   *
-   * @see https://en.wikipedia.org/wiki/Ordnance_Survey_National_Grid#All-numeric_grid_references
-   */
-  protected $osGridRef;
 
   /**
    * As it says on the tin.
@@ -103,14 +91,6 @@ class LocalgovAddress extends Address implements LocalgovAddressInterface {
   }
 
   /**
-   * Getter for the OS grid reference object.
-   */
-  public function getOsGridRef() :OsGridRef {
-
-    return $this->osGridRef;
-  }
-
-  /**
    * Creates an Address from an array.
    *
    * @return static
@@ -124,10 +104,6 @@ class LocalgovAddress extends Address implements LocalgovAddressInterface {
     $self->flat        = $data['flat'] ?? '';
     $self->houseName   = $data['houseName'] ?? '';
     $self->org         = $data['org'] ?? '';
-
-    if (isset($data['easting']) && isset($data['northing'])) {
-      $self->osGridRef = new OsGridRef((int) $data['easting'], (int) $data['northing']);
-    }
 
     return $self;
   }
@@ -146,11 +122,6 @@ class LocalgovAddress extends Address implements LocalgovAddressInterface {
     $array['flat']      = $this->getFlat();
     $array['houseName'] = $this->getHouseName();
     $array['org']       = $this->getOrganisationName();
-
-    if ($this->osGridRef) {
-      $array['easting']  = $this->osGridRef->getEasting();
-      $array['northing'] = $this->osGridRef->getNorthing();
-    }
 
     return $array;
   }

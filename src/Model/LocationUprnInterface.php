@@ -7,9 +7,16 @@ namespace LocalgovDrupal\OsPlacesGeocoder\Model;
 use Geocoder\Location;
 
 /**
- * Adds UPRN and display value support to Location.
+ * Adds UPRN and related property support to Location.
+ *
+ * New properties:
+ * - UPRN
+ * - Display name
+ * - Flat number
+ * - House name
+ * - Organisation name.
  */
-interface LocalgovAddressInterface extends Location {
+interface LocationUprnInterface extends Location {
 
   /**
    * Returns the Unique Property Reference Number.
@@ -37,10 +44,5 @@ interface LocalgovAddressInterface extends Location {
    * Returns the organisation name if any.
    */
   public function getOrganisationName() :string;
-
-  /**
-   * Getter for the OS grid reference object.
-   */
-  public function getOsGridRef() :OsGridRef;
 
 }

@@ -13,7 +13,7 @@ use Geocoder\Provider\Provider as GeocoderProviderInterface;
 use Geocoder\Query\GeocodeQuery;
 use Geocoder\Query\ReverseQuery;
 use Psr\Http\Client\ClientInterface as HttpClientInterface;
-use LocalgovDrupal\OsPlacesGeocoder\Model\LocalgovAddress;
+use LocalgovDrupal\OsPlacesGeocoder\Model\OsPlacesAddress;
 
 /**
  * Geocoder plugin for the Ordnance Survey Places API.
@@ -83,7 +83,7 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
 
     $results = [];
     foreach ($json['results'] as $place) {
-      $results[] = LocalgovAddress::createFromArray([
+      $results[] = OsPlacesAddress::createFromArray([
         'providedBy'       => $this->getName(),
         'streetNumber'     => $place['DPA']['BUILDING_NUMBER'] ?? NULL,
         'streetName'       => $place['DPA']['THOROUGHFARE_NAME'] ?? NULL,
