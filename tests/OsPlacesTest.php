@@ -4,13 +4,13 @@ declare (strict_types = 1);
 
 namespace LocalgovDrupal\OsPlacesGeocoder\Tests;
 
-use LocalgovDrupal\OsPlacesGeocoder\Provider\LocalgovOsPlacesGeocoder;
+use LocalgovDrupal\OsPlacesGeocoder\Provider\OsPlacesGeocoder;
 use Geocoder\Collection as AddressCollectionInterface;
 use Geocoder\IntegrationTest\BaseTestCase;
 use Geocoder\Query\GeocodeQuery;
 
 /**
- * Tests for the LocalGov OS Places Geocoder.
+ * Tests for the OS Places Geocoder.
  *
  * Uses cached query result to test functionality.  This provides a more
  * realistic test experience.
@@ -23,10 +23,10 @@ use Geocoder\Query\GeocodeQuery;
  * directory.  Subsequent test runs use the saved responses instead of making
  * any real HTTP requests.
  */
-class LocalgovOsPlacesTest extends BaseTestCase {
+class OsPlacesTest extends BaseTestCase {
 
   /**
-   * Test for LocalgovOsPlacesGeocoder::geocodeQuery().
+   * Test for OsPlacesGeocoder::geocodeQuery().
    *
    * Searches for BN1 3EJ which is a postcode.
    */
@@ -43,7 +43,7 @@ class LocalgovOsPlacesTest extends BaseTestCase {
   }
 
   /**
-   * More Test for LocalgovOsPlacesGeocoder::geocodeQuery().
+   * More Test for OsPlacesGeocoder::geocodeQuery().
    *
    * Searches for "Dyke road, Brighton" which is a street address.
    */
@@ -66,7 +66,7 @@ class LocalgovOsPlacesTest extends BaseTestCase {
    */
   protected function createProvider() {
 
-    $provider = new LocalgovOsPlacesGeocoder($this->getHttpClient(), $this->genericApiUrl, $this->postcodeApiUrl, $this->getApiKey());
+    $provider = new OsPlacesGeocoder($this->getHttpClient(), $this->genericApiUrl, $this->postcodeApiUrl, $this->getApiKey());
     return $provider;
   }
 

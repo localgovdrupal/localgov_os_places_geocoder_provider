@@ -24,7 +24,7 @@ use LocalgovDrupal\OsPlacesGeocoder\Model\OsPlacesAddress;
  * @see https://osdatahub.os.uk/docs/places/overview
  * @see https://en.wikipedia.org/wiki/Unique_Property_Reference_Number
  */
-class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderInterface {
+class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderInterface {
 
   /**
    * Keeps track of Geocoding parameters.
@@ -125,7 +125,7 @@ class LocalgovOsPlacesGeocoder extends AbstractHttpProvider implements GeocoderP
    */
   public function reverseQuery(ReverseQuery $query) :AddressCollectionInterface {
 
-    throw new UnsupportedOperation('The LocalgovOsPlacesGeocoder provider does not support reverse geocoding yet.');
+    throw new UnsupportedOperation('The OsPlacesGeocoder provider does not support reverse geocoding yet.');
   }
 
   /**
