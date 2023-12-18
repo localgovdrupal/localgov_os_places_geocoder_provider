@@ -68,9 +68,8 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
     }
 
     $search_query['output_srs'] = self::OS_OUTPUT_FORMAT_WITH_LAT_LON;
-
     if ($local_custodian_code = $query->getData('local_custodian_code', FALSE)) {
-      $search_query['fq'] = "LOCAL_CUSTODIAN_CODE:$local_custodian_code";
+      $search_query['fq'] = 'LOCAL_CUSTODIAN_CODE:' . (int) $local_custodian_code;
     }
 
     $api_url = sprintf('%s?%s', $api_endpoint, http_build_query($search_query));
