@@ -7,7 +7,7 @@
   "minimum-stability": "dev",
   "require": {
     "geocoder-php/common-http": "^4.1",
-    "willdurand/geocoder": "^4.0"
+    "willdurand/geocoder": "^4.0|^5.0"
   },
   "require-dev": {
     "geocoder-php/provider-integration-tests": "^1.0",
