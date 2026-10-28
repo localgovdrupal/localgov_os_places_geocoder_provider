@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace LocalgovDrupal\OsPlacesGeocoder\Provider;
 
@@ -55,6 +55,10 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
    *
    * Given a postcode or part of a street address, returns all the matching
    * addresses.
+   *
+   * Available filters:
+   * - local_custodian_code
+   * - address_classification_codes
    */
   public function geocodeQuery(GeocodeQuery $query) :AddressCollectionInterface {
 
@@ -67,12 +71,23 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
       $search_query = ['postcode' => $query_text];
     }
 
+    $search_query['dataset'] = implode(',', self::OS_PLACES_DATASETS);
+    $search_query[self::FILTER_KEY][] = 'LPI_LOGICAL_STATUS_CODE:' . self::LPI_APPROVED_ADDRESS_CODE;
+
     $search_query['output_srs'] = self::OS_OUTPUT_FORMAT_WITH_LAT_LON;
     if ($local_custodian_code = $query->getData('local_custodian_code', FALSE)) {
-      $search_query['fq'] = 'LOCAL_CUSTODIAN_CODE:' . (int) $local_custodian_code;
+      $search_query[self::FILTER_KEY][] = 'LOCAL_CUSTODIAN_CODE:' . (int) $local_custodian_code;
     }
 
-    $api_url = sprintf('%s?%s', $api_endpoint, http_build_query($search_query));
+    if ($classification_code_list = $query->getData('address_classification_codes', [])) {
+      array_walk($classification_code_list, function (string $classification_code, int $_i) use (&$search_query): void {
+        $search_query[self::FILTER_KEY][] = 'CLASSIFICATION_CODE:' . $classification_code;
+      });
+    }
+
+    // `fq[0]=foo&fq[1]=bar&baz[0]=qux` -> `fq=foo&fq=bar&baz[0]=qux`
+    $http_query_flat = preg_replace(self::HTTP_QUERY_PATTERN_CLASSIFICATION_CODE_ARRAY, self::FILTER_KEY, http_build_query($search_query));
+    $api_url = sprintf('%s?%s', $api_endpoint, $http_query_flat);
     $request = $this->getRequest($api_url);
     $request_w_more_headers = $request->withHeader('User-Agent', $this->userAgent)->withHeader('key', $this->apiKey);
 
@@ -91,22 +106,23 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
     foreach ($json['results'] as $place) {
       $results[] = OsPlacesAddress::createFromArray([
         'providedBy'       => $this->getName(),
-        'streetNumber'     => $place['DPA']['BUILDING_NUMBER'] ?? NULL,
-        'streetName'       => $place['DPA']['THOROUGHFARE_NAME'] ?? NULL,
-        'flat'             => $place['DPA']['SUB_BUILDING_NAME'] ?? NULL,
-        'houseName'        => $place['DPA']['BUILDING_NAME'] ?? NULL,
-        'org'              => $place['DPA']['ORGANISATION_NAME'] ?? NULL,
-        'locality'         => $place['DPA']['POST_TOWN'] ?? NULL,
-        'postalCode'       => $place['DPA']['POSTCODE'] ?? NULL,
+        'streetNumber'     => $place['LPI']['PAO_START_NUMBER'] ?? $place['DPA']['BUILDING_NUMBER'] ?? NULL,
+        'streetName'       => $place['LPI']['STREET_DESCRIPTION'] ?? $place['DPA']['THOROUGHFARE_NAME'] ?? NULL,
+        'flat'             => $place['LPI']['SAO_TEXT'] ?? $place['DPA']['SUB_BUILDING_NAME'] ?? NULL,
+        'houseName'        => $place['LPI']['PAO_TEXT'] ?? $place['DPA']['BUILDING_NAME'] ?? NULL,
+        'org'              => $place['LPI']['ORGANISATION'] ?? $place['DPA']['ORGANISATION_NAME'] ?? NULL,
+        'locality'         => $place['LPI']['TOWN_NAME'] ?? $place['DPA']['POST_TOWN'] ?? NULL,
+        'postalCode'       => $place['LPI']['POSTCODE_LOCATOR'] ?? $place['DPA']['POSTCODE'] ?? NULL,
         'country'          => 'United Kingdom',
         'countryCode'      => 'GB',
-        'display'          => $place['DPA']['ADDRESS'] ?? NULL,
-        'formattedAddress' => $place['DPA']['ADDRESS'] ?? NULL,
-        'latitude'         => $place['DPA']['LAT'] ?? NULL,
-        'longitude'        => $place['DPA']['LNG'] ?? NULL,
-        'easting'          => $place['DPA']['X_COORDINATE'] ?? NULL,
-        'northing'         => $place['DPA']['Y_COORDINATE'] ?? NULL,
-        'uprn'             => $place['DPA']['UPRN'] ?? NULL,
+        'display'          => $place['LPI']['ADDRESS'] ?? $place['DPA']['ADDRESS'] ?? NULL,
+        'formattedAddress' => $place['LPI']['ADDRESS'] ?? $place['DPA']['ADDRESS'] ?? NULL,
+        'latitude'         => $place['LPI']['LAT'] ?? $place['DPA']['LAT'] ?? NULL,
+        'longitude'        => $place['LPI']['LNG'] ?? $place['DPA']['LNG'] ?? NULL,
+        'easting'          => $place['LPI']['X_COORDINATE'] ?? $place['DPA']['X_COORDINATE'] ?? NULL,
+        'northing'         => $place['LPI']['Y_COORDINATE'] ?? $place['DPA']['Y_COORDINATE'] ?? NULL,
+        'ward_code'        => $place['LPI']['WARD_CODE'] ?? $place['DPA']['WARD_CODE'] ?? NULL,
+        'uprn'             => $place['LPI']['UPRN'] ?? $place['DPA']['UPRN'] ?? NULL,
       ]);
     }
 
@@ -135,6 +151,16 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
   }
 
   /**
+   * Address datasets.
+   *
+   * DPA or Delivery Point Address is the default dataset.  It does not include
+   * flats under a shared door.  LPI or Land Property Identifier does.
+   *
+   * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/datasets
+   */
+  const OS_PLACES_DATASETS = ['DPA', 'LPI'];
+
+  /**
    * Default output format.
    *
    * The 'EPSG:4326' output format carries latitute and longitude values.  Other
@@ -149,6 +175,25 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
    * @see https://en.wikipedia.org/wiki/Postcodes_in_the_United_Kingdom#Validation
    */
   const UK_SIMPLE_POSTCODE_REGEX = '^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$';
+
+  /**
+   * Approved address code used in the LPI address dataset.
+   *
+   * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/code-lists
+   */
+  const LPI_APPROVED_ADDRESS_CODE = 1;
+
+  /**
+   * Replacement pattern for `fq[N]`.
+   */
+  const HTTP_QUERY_PATTERN_CLASSIFICATION_CODE_ARRAY = '#fq%5B[0-9]%5D#';
+
+  /**
+   * Code filter key.
+   *
+   * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/technical-specification/postcode
+   */
+  const FILTER_KEY = 'fq';
 
   /**
    * Query by street address.

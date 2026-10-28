@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types = 1);
+declare (strict_types=1);
 
 namespace LocalgovDrupal\OsPlacesGeocoder\Tests;
 
@@ -38,6 +38,28 @@ class OsPlacesTest extends BaseTestCase {
     $this->assertInstanceOf(AddressCollectionInterface::class, $result);
 
     $address = $result->first()->toArray();
+    $this->assertEquals('22280799', $address['uprn']);
+    $this->assertEquals(531041, $address['easting']);
+  }
+
+  /**
+   * Test for OsPlacesGeocoder::geocodeQuery().
+   *
+   * Searches for BN1 3EJ which is a postcode.  Applies the address
+   * classification code filter.
+   */
+  public function testGeocodeQueryWithFilter() {
+
+    $provider = $this->createProvider();
+
+    $query  = GeocodeQuery::create('BN1 1JE');
+    $query  = $query->withData('address_classification_codes', ['P']);
+    $result = $provider->geocodeQuery($query);
+    $this->assertInstanceOf(AddressCollectionInterface::class, $result);
+
+    $this->assertEquals(1, $result->count());
+
+    $address = $result->first()->toArray();
     $this->assertEquals('22062038', $address['uprn']);
     $this->assertEquals(531044, $address['easting']);
   }
@@ -55,10 +77,10 @@ class OsPlacesTest extends BaseTestCase {
     $this->assertInstanceOf(AddressCollectionInterface::class, $result);
 
     $address = $result->first()->toArray();
-    $this->assertEquals('22047674', $address['uprn']);
-    $this->assertEquals(530742, $address['easting']);
-    $this->assertEquals(50.824172, $address['latitude']);
-    $this->assertEquals('11, DYKE ROAD, BRIGHTON, BN1 3FE', $address['display']);
+    $this->assertEquals('22050003', $address['uprn']);
+    $this->assertEquals(530796, $address['easting']);
+    $this->assertEquals(50.8240188, $address['latitude']);
+    $this->assertEquals('2, DYKE ROAD, BRIGHTON, BRIGHTON & HOVE, BN1 3FE', $address['display']);
   }
 
   /**
