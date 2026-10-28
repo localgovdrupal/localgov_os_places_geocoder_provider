@@ -121,7 +121,7 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
         'longitude'        => $place['LPI']['LNG'] ?? $place['DPA']['LNG'] ?? NULL,
         'easting'          => $place['LPI']['X_COORDINATE'] ?? $place['DPA']['X_COORDINATE'] ?? NULL,
         'northing'         => $place['LPI']['Y_COORDINATE'] ?? $place['DPA']['Y_COORDINATE'] ?? NULL,
-        'ward_code'        => $place['LPI']['WARD_CODE'] ?? $place['DPA']['WARD_CODE'] ?? NULL,
+        'wardCode'         => $place['LPI']['WARD_CODE'] ?? $place['DPA']['WARD_CODE'] ?? NULL,
         'uprn'             => $place['LPI']['UPRN'] ?? $place['DPA']['UPRN'] ?? NULL,
       ]);
     }
