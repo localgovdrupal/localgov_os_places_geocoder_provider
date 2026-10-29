@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace LocalgovDrupal\OsPlacesGeocoder\Model;
 
@@ -51,6 +51,17 @@ final class OsPlacesAddress extends Address implements AddressOsGridRefInterface
    */
   protected $org = '';
 
+  /**
+   * ONS ward code.
+   *
+   * Example code for the Central Hove ward: E05015399
+   *
+   * @var string
+   *
+   * @see https://geoportal.statistics.gov.uk/datasets/ons::wards-may-2026-names-and-codes-in-the-uk/explore
+   * @see https://www.ons.gov.uk/methodology/geography/geographicalproducts/namescodesandlookups/namesandcodeslistings/namesandcodesforadministrativegeography
+   */
+  protected $wardCode = '';
 
   /**
    * All numeric Ordnance Survey National Grid reference.
@@ -110,6 +121,14 @@ final class OsPlacesAddress extends Address implements AddressOsGridRefInterface
   }
 
   /**
+   * Returns the ONS ward code.
+   */
+  public function getWardCode() :string {
+
+    return $this->wardCode;
+  }
+
+  /**
    * Creates an Address from an array.
    *
    * @return static
@@ -127,6 +146,7 @@ final class OsPlacesAddress extends Address implements AddressOsGridRefInterface
     $self->flat        = $data['flat'] ?? '';
     $self->houseName   = $data['houseName'] ?? '';
     $self->org         = $data['org'] ?? '';
+    $self->wardCode    = $data['wardCode'] ?? '';
 
     return $self;
   }
