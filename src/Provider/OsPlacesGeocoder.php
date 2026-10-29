@@ -72,7 +72,7 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
     }
 
     $search_query['dataset'] = implode(',', self::OS_PLACES_DATASETS);
-    $search_query[self::FILTER_KEY][] = 'LPI_LOGICAL_STATUS_CODE:' . self::LPI_APPROVED_ADDRESS_CODE;
+    $search_query[self::FILTER_KEY][] = 'LPI_LOGICAL_STATUS_CODE:' . self::LPI_ADDRESS_CODE_APPROVED;
 
     $search_query['output_srs'] = self::OS_OUTPUT_FORMAT_WITH_LAT_LON;
     if ($local_custodian_code = $query->getData('local_custodian_code', FALSE)) {
@@ -92,7 +92,7 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
     $request_w_more_headers = $request->withHeader('User-Agent', $this->userAgent)->withHeader('key', $this->apiKey);
 
     $query_result = $this->getParsedResponse($request_w_more_headers);
-    $json = json_decode($query_result, TRUE);
+    $json = json_decode($query_result, associative:TRUE);
 
     if (is_null($json) || !is_array($json)) {
       throw InvalidServerResponse::create($api_url);
@@ -102,8 +102,10 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
       return new AddressCollection([]);
     }
 
+    $active_address_list = array_filter($json['results'], fn($v) => $v[array_key_first($v)]['BLPU_STATE_CODE'] === self::BLPU_STATE_CODE_IN_USE && $v[array_key_first($v)]['POSTAL_ADDRESS_CODE'] !== self::NOT_A_POSTAL_ADDRESS_CODE);
+
     $results = [];
-    foreach ($json['results'] as $place) {
+    foreach ($active_address_list as $place) {
       $results[] = OsPlacesAddress::createFromArray([
         'providedBy'       => $this->getName(),
         'streetNumber'     => $place['LPI']['PAO_START_NUMBER'] ?? $place['DPA']['BUILDING_NUMBER'] ?? NULL,
@@ -177,23 +179,38 @@ class OsPlacesGeocoder extends AbstractHttpProvider implements GeocoderProviderI
   const UK_SIMPLE_POSTCODE_REGEX = '^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$';
 
   /**
-   * Approved address code used in the LPI address dataset.
-   *
-   * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/code-lists
-   */
-  const LPI_APPROVED_ADDRESS_CODE = 1;
-
-  /**
    * Replacement pattern for `fq[N]`.
    */
   const HTTP_QUERY_PATTERN_CLASSIFICATION_CODE_ARRAY = '#fq%5B[0-9]%5D#';
 
   /**
-   * Code filter key.
+   * HTTP query parameter for applying various filters.
    *
    * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/technical-specification/postcode
    */
   const FILTER_KEY = 'fq';
+
+  /**
+   * Approved address code used in the LPI address dataset.
+   *
+   * @see https://docs.os.uk/os-apis/accessing-os-apis/os-places-api/code-lists
+   */
+  const LPI_ADDRESS_CODE_APPROVED = 1;
+
+  /**
+   * BLPU (Basic Land and Property Unit) code of interest.
+   *
+   * The "In use" code.
+   */
+  const BLPU_STATE_CODE_IN_USE = '2';
+
+  /**
+   * We are only after postal addresses.
+   *
+   * Not all listed addresses are postal addresses.  E.g. a bus stop is not a
+   * postal address.
+   */
+  const NOT_A_POSTAL_ADDRESS_CODE = 'N';
 
   /**
    * Query by street address.
